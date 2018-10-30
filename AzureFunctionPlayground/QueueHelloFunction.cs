@@ -21,7 +21,7 @@ namespace AzureFunctionPlayground
             await outputQueue.AddAsync(new OutputQueueMessage
             {
                 Message = $"Hello {inputQueueMessage.Name}",
-                Timestamp = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow
             });
         }
     }
