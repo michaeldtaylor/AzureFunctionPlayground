@@ -27,7 +27,7 @@ namespace AzureFunctionPlayground
     public static class ComplexBoundFunction
     {
         [FunctionName(nameof(ComplexBoundFunction))]
-        public static async Task Run(
+        public static async Task RunAsync(
             // Input
             [QueueTrigger(ComplexBoundConfiguration.InputQueueName)] InputQueueMessage inputQueueMessage,
             [Table(ComplexBoundConfiguration.InputTableName)] CloudTable inputTable,

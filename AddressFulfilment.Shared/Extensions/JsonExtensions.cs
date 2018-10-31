@@ -1,25 +1,24 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Reflection;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 
 namespace AddressFulfilment.Shared.Extensions
 {
+    using System;
+    using Newtonsoft.Json;
+
     public static class JsonExtensions
     {
         public static readonly JsonSerializerSettings DefaultSettings = CreateSettings();
         public static readonly JsonSerializerSettings DefaultTypedSettings = CreateTypedSettings();
 
-        public static string ToJson(this object obj, Formatting formatting = Formatting.Indented,
-            JsonSerializerSettings settings = null)
+        public static string ToJson(this object obj, Formatting formatting = Formatting.Indented, JsonSerializerSettings settings = null)
         {
             return JsonConvert.SerializeObject(obj, formatting, settings ?? DefaultSettings);
         }
 
-        public static string ToJson(this object obj, Type objectType, Formatting formatting = Formatting.Indented,
-            JsonSerializerSettings settings = null)
+        public static string ToJson(this object obj, Type objectType, Formatting formatting = Formatting.Indented, JsonSerializerSettings settings = null)
         {
             return JsonConvert.SerializeObject(obj, objectType, formatting, settings ?? DefaultSettings);
         }

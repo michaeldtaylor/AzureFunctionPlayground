@@ -38,7 +38,7 @@ namespace AddressFulfilment.Shared.Storage.Blob
         {
             Guard.NotNullOrEmpty(nameof(uri), uri);
 
-            Initialise();
+            await InitialiseAsync();
 
             uri = BlobStoreUtils.GetRelativeUri(uri, _blobContainerReference);
 
@@ -57,7 +57,7 @@ namespace AddressFulfilment.Shared.Storage.Blob
                 throw new ArgumentException("Uri was empty", nameof(uri));
             }
 
-            Initialise();
+            await InitialiseAsync();
 
             uri = BlobStoreUtils.GetRelativeUri(uri, _blobContainerReference);
             var blob = await _blobContainerReference.GetBlobReferenceFromServerAsync(uri);
@@ -81,7 +81,7 @@ namespace AddressFulfilment.Shared.Storage.Blob
                 throw new ArgumentException("Uri was empty", nameof(uri));
             }
 
-            Initialise();
+            await InitialiseAsync();
 
             var blob = _blobContainerReference.GetBlobReference(BlobStoreUtils.GetRelativeUri(uri, _blobContainerReference));
 
@@ -93,17 +93,17 @@ namespace AddressFulfilment.Shared.Storage.Blob
             }
         }
 
-        public Task<CloudBlockBlob> GetBlobAsync(string blobName)
+        public async Task<CloudBlockBlob> GetBlobAsync(string blobName)
         {
             Guard.NotNullOrEmpty(nameof(blobName), blobName);
 
             try
             {
-                Initialise();
+                await InitialiseAsync();
 
                 blobName = BlobStoreUtils.GetRelativeUri(blobName, _blobContainerReference);
 
-                return Task.FromResult(_blobContainerReference.GetBlockBlobReference(blobName));
+                return _blobContainerReference.GetBlockBlobReference(blobName);
             }
             catch (Exception exception)
             {
@@ -136,7 +136,7 @@ namespace AddressFulfilment.Shared.Storage.Blob
 
             try
             {
-                Initialise();
+                await InitialiseAsync();
 
                 uri = BlobStoreUtils.GetRelativeUri(uri, _blobContainerReference);
                 var blob = await _blobContainerReference.GetBlobReferenceFromServerAsync(uri);
@@ -151,9 +151,9 @@ namespace AddressFulfilment.Shared.Storage.Blob
             return metaData;
         }
 
-        public string GetSharedAccessSignature(string blobName, TimeSpan expiryTime, bool writeAccess = false)
+        public async Task<string> GetSharedAccessSignatureAsync(string blobName, TimeSpan expiryTime, bool writeAccess = false)
         {
-            Initialise();
+            await InitialiseAsync();
 
             blobName = BlobStoreUtils.GetRelativeUri(blobName, _blobContainerReference);
             var blob = _blobContainerReference.GetBlockBlobReference(blobName);
@@ -171,7 +171,7 @@ namespace AddressFulfilment.Shared.Storage.Blob
 
         public async Task<IEnumerable<string>> ListAsync(string prefix = default(string))
         {
-            Initialise();
+            await InitialiseAsync();
 
             var blobs = await _blobContainerReference.ListBlobsAsync(prefix, true, BlobListingDetails.None, null);
 
@@ -180,7 +180,7 @@ namespace AddressFulfilment.Shared.Storage.Blob
 
         public async Task<List<IListBlobItem>> ListDirectoryAsync(string directoryName)
         {
-            Initialise();
+            await InitialiseAsync();
 
             return await _blobContainerReference.ListBlobsAsync(directoryName);
         }
@@ -192,7 +192,7 @@ namespace AddressFulfilment.Shared.Storage.Blob
 
         public async Task<Uri> WriteAsync(Stream stream, IDictionary<string, string> metadata, string blobName, string friendlyName = null, string contentType = null, string contentEncoding = null)
         {
-            Initialise();
+            await InitialiseAsync();
 
             var blob = _blobContainerReference.GetBlockBlobReference(blobName);
 
@@ -222,7 +222,7 @@ namespace AddressFulfilment.Shared.Storage.Blob
         {
             Guard.NotNullOrEmpty(nameof(blobName), blobName);
 
-            Initialise();
+            await InitialiseAsync();
 
             var uri = BlobStoreUtils.GetRelativeUri(blobName, _blobContainerReference);
             var blob = _blobContainerReference.GetBlockBlobReference(uri);
@@ -232,7 +232,7 @@ namespace AddressFulfilment.Shared.Storage.Blob
 
         public async Task UpdateMetadataAsync(string blobName, IDictionary<string, string> metadata)
         {
-            Initialise();
+            await InitialiseAsync();
 
             var uri = BlobStoreUtils.GetRelativeUri(blobName, _blobContainerReference);
             var blob = _blobContainerReference.GetBlockBlobReference(uri);
@@ -243,7 +243,7 @@ namespace AddressFulfilment.Shared.Storage.Blob
             await blob.SetMetadataAsync();
         }
 
-        protected void Initialise()
+        protected async Task InitialiseAsync()
         {
             if (!_initialised)
             {
@@ -251,7 +251,7 @@ namespace AddressFulfilment.Shared.Storage.Blob
                 {
                     var connectionString = ConnectionString ?? AzureStorageAccount.ConnectionString.Value;
 
-                    _blobContainerReference = AzureStorageReferenceManager.GetBlobReference(connectionString, ContainerName, PublicAccessType);
+                    _blobContainerReference = await AzureStorageReferenceManager.GetBlobReferenceAsync(connectionString, ContainerName, PublicAccessType);
 
                     _initialised = true;
                 }

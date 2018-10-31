@@ -1,15 +1,17 @@
 using System.Linq;
 using System.Threading.Tasks;
 using AzureFunctionPlayground.Shared.Messages;
-using NUnit.Framework;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Shouldly;
 
 namespace AzureFunctionPlayground.Tests
 {
+    [TestClass]
     public class QueueHelloFunctionTests
     {
-        [TestCase("Michael", "Hello Michael")]
-        [TestCase("Fred", "Hello Fred")]
+        [DataTestMethod]
+        [DataRow("Michael", "Hello Michael")]
+        [DataRow("Fred", "Hello Fred")]
         public async Task When_adding_a_name_to_input_queue_then_adds_message_to_output_queue(string name, string expectedResponse)
         {
             // Arrange
@@ -21,7 +23,7 @@ namespace AzureFunctionPlayground.Tests
             };
 
             // Act
-            await QueueHelloFunction.Run(inputQueueMessage, outputQueue, log);
+            await QueueHelloFunction.RunAsync(inputQueueMessage, outputQueue, log);
 
             // Assert
             outputQueue.AddedItems.Single().Message.ShouldBe(expectedResponse);

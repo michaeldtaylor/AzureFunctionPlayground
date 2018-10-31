@@ -8,11 +8,18 @@ namespace AzureFunctionPlayground
 {
     public static class QueueHelloFunction
     {
-        [FunctionName("QueueHelloFunction")]
-        public static async Task Run(
+        public static class QueueHelloConfiguration
+        {
+            // Queues
+            public const string InputQueueName = "queuehelloinputqueue";
+            public const string OutputQueueName = "queuehellooutputqueue";
+        }
+
+        [FunctionName(nameof(QueueHelloFunction))]
+        public static async Task RunAsync(
             // Input
-            [QueueTrigger("QueueHelloFunctionInput")] InputQueueMessage inputQueueMessage,
-            [Queue("QueueHelloFunctionOutput")] IAsyncCollector<OutputQueueMessage> outputQueue,
+            [QueueTrigger(QueueHelloConfiguration.InputQueueName)] InputQueueMessage inputQueueMessage,
+            [Queue(QueueHelloConfiguration.OutputQueueName)] IAsyncCollector<OutputQueueMessage> outputQueue,
             // Misc
             ILogger log)
         {

@@ -67,7 +67,7 @@ namespace AzureFunctionPlayground
 
             _log.LogInformation("Writing to output table.");
 
-            await _outputTable.AddAsync(new OutputTableEntity
+            await _outputTable.AddAsync(new OutputTableEntity(inputQueueMessage.Name, inputQueueMessage.Name)
             {
                 Message = $"Hello {inputQueueMessage.Name}",
                 CreatedAt = timestamp

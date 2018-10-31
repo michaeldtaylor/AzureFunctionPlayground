@@ -26,7 +26,7 @@ namespace AddressFulfilment.Shared.Storage.Contracts
 
         Task<Uri> WriteAsync(Stream stream, IDictionary<string, string> metadata, string blobName, string friendlyName = null, string contentType = null, string contentEncoding = null);
 
-        string GetSharedAccessSignature(string blobName, TimeSpan expiryTime, bool writeAccess = false);
+        Task<string> GetSharedAccessSignatureAsync(string blobName, TimeSpan expiryTime, bool writeAccess = false);
 
         Task<bool> BlobExistsAsync(string blobName);
 

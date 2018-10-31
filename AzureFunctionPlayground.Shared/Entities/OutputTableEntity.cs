@@ -1,15 +1,14 @@
 ﻿using System;
-using AddressFulfilment.Shared.Storage.Table;
+using Microsoft.WindowsAzure.Storage.Table;
 
 namespace AzureFunctionPlayground.Shared.Entities
 {
-    public class OutputTableEntity
+    public class OutputTableEntity : TableEntity
     {
-        [PartitionKey]
-        public Guid PartitionKey { get; set; }
-
-        [RowKey]
-        public Guid RowKey { get; set; }
+        public OutputTableEntity(string partitionKey, string rowKey)
+            : base(partitionKey, rowKey)
+        {
+        }
 
         public string Message { get; set; }
 

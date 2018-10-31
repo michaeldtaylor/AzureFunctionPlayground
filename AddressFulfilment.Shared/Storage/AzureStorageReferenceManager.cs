@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Net;
+using System.Threading.Tasks;
 using AddressFulfilment.Shared.Extensions;
 using AddressFulfilment.Shared.Utilities;
 using Microsoft.WindowsAzure.Storage;
@@ -13,25 +14,25 @@ namespace AddressFulfilment.Shared.Storage
     public static class AzureStorageReferenceManager
     {
         private static readonly ConcurrentDictionary<string, CloudStorageAccount> StorageAccounts = new ConcurrentDictionary<string, CloudStorageAccount>();
-        private static readonly ConcurrentDictionary<string, CloudTable> TableClients = new ConcurrentDictionary<string, CloudTable>();
-        private static readonly ConcurrentDictionary<string, CloudBlobContainer> BlobClients = new ConcurrentDictionary<string, CloudBlobContainer>();
+        private static readonly ConcurrentDictionary<string, Task<CloudTable>> TableClients = new ConcurrentDictionary<string, Task<CloudTable>>();
+        private static readonly ConcurrentDictionary<string, Task<CloudBlobContainer>> BlobClients = new ConcurrentDictionary<string, Task<CloudBlobContainer>>();
 
         private static readonly string SessionId = Guid.NewGuid().ToString().Substring(0, 6);
         
-        public static CloudStorageAccount GetStorageAccount(string cloudStorageAccountConnectionString)
+        public static CloudStorageAccount GetStorageAccount(string storageConnectionString)
         {
-            return StorageAccounts.GetOrAdd(cloudStorageAccountConnectionString, CloudStorageAccount.Parse);
+            return StorageAccounts.GetOrAdd(storageConnectionString, CloudStorageAccount.Parse);
         }
 
-        internal static CloudTable GetTableReference(string cloudStorageAccountConnectionString, string tableName)
+        internal static Task<CloudTable> GetTableReference(string storageConnectionString, string tableName)
         {
             Guard.NotNullOrEmpty(nameof(tableName), tableName);
 
             tableName = GetTableName(tableName);
 
-            var cloudStorageAccount = GetStorageAccount(cloudStorageAccountConnectionString);
+            var cloudStorageAccount = GetStorageAccount(storageConnectionString);
 
-            return TableClients.GetOrAdd(cloudStorageAccount.TableEndpoint + "/" + tableName, _ =>
+            return TableClients.GetOrAdd(cloudStorageAccount.TableEndpoint + "/" + tableName, async _ =>
             {
                 var client = cloudStorageAccount.CreateCloudTableClient();
 
@@ -45,7 +46,7 @@ namespace AddressFulfilment.Shared.Storage
 
                 try
                 {
-                    if (Retry.WithDelayOnException(() => tableReference.CreateIfNotExists()))
+                    if (await Retry.WithDelayOnException(() => tableReference.CreateIfNotExistsAsync()))
                     {
                         TraceLogger.Info($"Created table. name={tableReference.Name}", nameof(AzureStorageReferenceManager));
                     }
@@ -59,29 +60,26 @@ namespace AddressFulfilment.Shared.Storage
             });
         }
 
-        internal static CloudBlobContainer GetBlobReference(string cloudStorageAccountConnectionString, string containerName, BlobContainerPublicAccessType accessType)
+        internal static Task<CloudBlobContainer> GetBlobReferenceAsync(string storageConnectionString, string containerName, BlobContainerPublicAccessType accessType)
         {
-            if (string.IsNullOrEmpty(containerName))
-            {
-                throw new ArgumentNullException(nameof(containerName));
-            }
+            Guard.NotNullOrEmpty(nameof(containerName), containerName);
 
             containerName = GetBlobContainerName(containerName);
 
-            var cloudStorageAccount = GetStorageAccount(cloudStorageAccountConnectionString);
+            var cloudStorageAccount = GetStorageAccount(storageConnectionString);
 
-            return BlobClients.GetOrAdd(cloudStorageAccount.TableEndpoint + "/" + containerName, _ =>
+            return BlobClients.GetOrAdd(cloudStorageAccount.TableEndpoint + "/" + containerName, async _ =>
             {
                 var client = cloudStorageAccount.CreateCloudBlobClient();
                 client.DefaultRequestOptions.RetryPolicy = new LinearRetry(TimeSpan.FromSeconds(3), 3);
 
                 var container = client.GetContainerReference(containerName.ToLowerInvariant());
 
-                if (Retry.WithDelayOnException(() => container.CreateIfNotExists()))
+                if (await Retry.WithDelayOnException(() => container.CreateIfNotExistsAsync()))
                 {
                     var containerPermissions = new BlobContainerPermissions { PublicAccess = accessType };
 
-                    container.SetPermissions(containerPermissions);
+                    await container.SetPermissionsAsync(containerPermissions);
 
                     TraceLogger.Info($"Created blob container. name={container.Name}", nameof(AzureStorageReferenceManager));
                 }

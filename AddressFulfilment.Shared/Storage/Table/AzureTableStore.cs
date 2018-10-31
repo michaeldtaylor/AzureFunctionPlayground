@@ -156,7 +156,7 @@ namespace AddressFulfilment.Shared.Storage.Table
 
         public async Task DeleteAsync(T entity, bool ignoreETag = false)
         {
-            Initialise();
+            await InitialiseAsync();
 
             var dynamicTableEntity = new DynamicTableEntity
             {
@@ -202,7 +202,7 @@ namespace AddressFulfilment.Shared.Storage.Table
 
         public async Task<T> GetAsync(string partitionKey, string rowKey)
         {
-            Initialise();
+            await InitialiseAsync();
 
             var retrieveOperation = TableOperation.Retrieve(
                 GenerateKey(partitionKey),
@@ -219,7 +219,7 @@ namespace AddressFulfilment.Shared.Storage.Table
 
         public async Task<IEnumerable<T>> QueryAsync(TableQuery query)
         {
-            Initialise();
+            await InitialiseAsync();
 
             TableContinuationToken token = null;
             var results = new List<T>();
@@ -243,7 +243,7 @@ namespace AddressFulfilment.Shared.Storage.Table
 
         public async Task<bool> ContainsQueryAsync(TableQuery tableQuery)
         {
-            Initialise();
+            await InitialiseAsync();
 
             // We only need to grab a single entity to know whether or not anything exists
             tableQuery.Take(1);
@@ -263,7 +263,7 @@ namespace AddressFulfilment.Shared.Storage.Table
 
         public async Task ClearAsync()
         {
-            Initialise();
+            await InitialiseAsync();
 
             var tableQuery = new TableQuery
             {
@@ -303,7 +303,7 @@ namespace AddressFulfilment.Shared.Storage.Table
             return TableKeyEncoding.Encode(key);
         }
 
-        private void Initialise()
+        private async Task InitialiseAsync()
         {
             if (!_initialised)
             {
@@ -314,7 +314,7 @@ namespace AddressFulfilment.Shared.Storage.Table
                     throw new AzureTableStoreException($"Initialisation failed for AzureTableStore of type {typeof(T)}. Both ConnectionString property, and App.config StorageAccountConnectionString are null.");
                 }
 
-                _tableReference = AzureStorageReferenceManager.GetTableReference(ConnectionString ?? storageConnectionString, TableName);
+                _tableReference = await AzureStorageReferenceManager.GetTableReference(ConnectionString ?? storageConnectionString, TableName);
                 _initialised = true;
             }
         }
@@ -324,7 +324,7 @@ namespace AddressFulfilment.Shared.Storage.Table
             Func<DynamicTableEntity, TableOperation> getTableOperation,
             bool ignoreETag = false)
         {
-            Initialise();
+            await InitialiseAsync();
 
             var tableOperation = ToTableOperation(entity, getTableOperation, ignoreETag);
 
